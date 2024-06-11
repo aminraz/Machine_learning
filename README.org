@@ -152,8 +152,7 @@ For ratio level data we can use boxplots to see their distribution:
   file_name
 #+end_src
 
-[[
-file:images/box_curricular.png]]
+[[file:images/box_curricular.png]]
 
 ** Changing data types
 
@@ -274,8 +273,7 @@ text file:
   file_name
 #+end_src
 
-[[
-file:summary_logit.txt]]
+[[file:summary_logit.txt]]
 
 Looking into the p value of coefficients, we can easily say that
 ~Nacionality~ and ~Internation~ predictors are not related to the
@@ -351,7 +349,7 @@ We see a little bit of improvement over previous model.
   file_name
 #+end_src
 
-: summary_new.txt
+[[file:summary_new.txt]]
 
 * Conclusion
 
