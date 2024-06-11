@@ -1,10 +1,10 @@
 #+startup: overview
 #+property: header-args:python :session *class*
-#+title: kaggle playground 
+#+title: Kaggle Playground: Classification with an Academic Success Dataset 
 
 In this project, I use a dataset announced in Kaggle for
 classification of students into different groups based on different
-predictors. You can access the dataset from this link.
+predictors. You can access the dataset from this [[https://www.kaggle.com/competitions/playground-series-s4e6][link]].
 
 My approach is to use multinomial logistic regression. We start by
 importing required packages.
@@ -321,9 +321,7 @@ model with categorical data:
   df_new=df_ref.join(df_c.drop(columns=df_c.select_dtypes("category")))
 #+end_src
 
-: None
-
-Training the model:
+** Training the model:
 
 #+begin_src python
   X=df_new.drop(columns=["id","Target"])
