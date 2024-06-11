@@ -1,0 +1,308 @@
+#+startup: overview
+#+property: header-args:python :session *class* :results silent
+#+title: kaggle playground 
+
+In this project, a predictive model is built for a Kaggle palyground competition announced [[https://www.kaggle.com/competitions/playground-series-s4e6/overview][here]].
+
+* Importing packages
+
+#+begin_src python
+  import numpy as np
+  import seaborn as sns
+  import pandas as pd
+  import matplotlib.pyplot as plt
+  import statsmodels.api as sm
+  from sklearn.metrics import confusion_matrix, accuracy_score
+  from sklearn.model_selection import train_test_split
+  from sklearn.ensemble import RandomForestClassifier
+  from scipy import stats
+#+end_src
+
+* Inspecting the data
+
+#+begin_src python :results output
+  df=pd.read_csv("train.csv", index_col="id")
+  df.info()
+#+end_src
+
+#+RESULTS:
+#+begin_example
+<class 'pandas.core.frame.DataFrame'>
+Index: 76518 entries, 0 to 76517
+Data columns (total 37 columns):
+ #   Column                                          Non-Null Count  Dtype  
+---  ------                                          --------------  -----  
+ 0   Marital status                                  76518 non-null  int64  
+ 1   Application mode                                76518 non-null  int64  
+ 2   Application order                               76518 non-null  int64  
+ 3   Course                                          76518 non-null  int64  
+ 4   Daytime/evening attendance                      76518 non-null  int64  
+ 5   Previous qualification                          76518 non-null  int64  
+ 6   Previous qualification (grade)                  76518 non-null  float64
+ 7   Nacionality                                     76518 non-null  int64  
+ 8   Mother's qualification                          76518 non-null  int64  
+ 9   Father's qualification                          76518 non-null  int64  
+ 10  Mother's occupation                             76518 non-null  int64  
+ 11  Father's occupation                             76518 non-null  int64  
+ 12  Admission grade                                 76518 non-null  float64
+ 13  Displaced                                       76518 non-null  int64  
+ 14  Educational special needs                       76518 non-null  int64  
+ 15  Debtor                                          76518 non-null  int64  
+ 16  Tuition fees up to date                         76518 non-null  int64  
+ 17  Gender                                          76518 non-null  int64  
+ 18  Scholarship holder                              76518 non-null  int64  
+ 19  Age at enrollment                               76518 non-null  int64  
+ 20  International                                   76518 non-null  int64  
+ 21  Curricular units 1st sem (credited)             76518 non-null  int64  
+ 22  Curricular units 1st sem (enrolled)             76518 non-null  int64  
+ 23  Curricular units 1st sem (evaluations)          76518 non-null  int64  
+ 24  Curricular units 1st sem (approved)             76518 non-null  int64  
+ 25  Curricular units 1st sem (grade)                76518 non-null  float64
+ 26  Curricular units 1st sem (without evaluations)  76518 non-null  int64  
+ 27  Curricular units 2nd sem (credited)             76518 non-null  int64  
+ 28  Curricular units 2nd sem (enrolled)             76518 non-null  int64  
+ 29  Curricular units 2nd sem (evaluations)          76518 non-null  int64  
+ 30  Curricular units 2nd sem (approved)             76518 non-null  int64  
+ 31  Curricular units 2nd sem (grade)                76518 non-null  float64
+ 32  Curricular units 2nd sem (without evaluations)  76518 non-null  int64  
+ 33  Unemployment rate                               76518 non-null  float64
+ 34  Inflation rate                                  76518 non-null  float64
+ 35  GDP                                             76518 non-null  float64
+ 36  Target                                          76518 non-null  object 
+dtypes: float64(7), int64(29), object(1)
+memory usage: 22.2+ MB
+#+end_example
+
+The aim of classification is to predict ~Target~
+
+#+begin_src python :eval no
+  df.Target.value_counts()
+#+end_src
+
+#+RESULTS:
+: Target
+: Graduate    36282
+: Dropout     25296
+: Enrolled    14940
+: Name: count, dtype: int64
+
+~Target~ comes in three classes: Dropout, Graduate, and Enrolled.
+
+Many of the predictors in out dataframe come in ~int~ format but actually represent categorical data.
+
+There are generally four levels of data:
+- Nominal (N)
+- Ordinal (O)
+- Interval (I)
+- Ratio (R)
+
+
+Using the column name, we assign a type to each predictor written in the following table:
+
+|  # | data level | name                                           | Type    |
+|----+------------+------------------------------------------------+---------|
+|  0 | (N)        | Marital status                                 | int64   |
+|  1 | (N)        | Application mode                               | int64   |
+|  2 | (N)        | Application order                              | int64   |
+|  3 | (N)        | Course                                         | int64   |
+|  4 | (N,B)      | Daytime/evening attendance                     | int64   |
+|  5 | (N)        | Previous qualification                         | int64   |
+|  6 | (I)        | Previous qualification (grade)                 | float64 |
+|  7 | (N)        | Nacionality                                    | int64   |
+|  8 | (N)        | Mother's qualification                         | int64   |
+|  9 | (N)        | Father's qualification                         | int64   |
+| 10 | (N)        | Mother's occupation                            | int64   |
+| 11 | (N)        | Father's occupation                            | int64   |
+| 12 | (R)        | Admission grade                                | float64 |
+| 13 | (N,B)      | Displaced                                      | int64   |
+| 14 | (N,B)      | Educational special needs                      | int64   |
+| 15 | (N,B)      | Debtor                                         | int64   |
+| 16 | (N,B)      | Tuition fees up to date                        | int64   |
+| 17 | (N,B)      | Gender                                         | int64   |
+| 18 | (N,B)      | Scholarship holder                             | int64   |
+| 19 | (R)        | Age at enrollment                              | int64   |
+| 20 | (N,B)      | International                                  | int64   |
+| 21 | (R)        | Curricular units 1st sem (credited)            | int64   |
+| 22 | (R)        | Curricular units 1st sem (enrolled)            | int64   |
+| 23 | (R)        | Curricular units 1st sem (evaluations)         | int64   |
+| 24 | (R)        | Curricular units 1st sem (approved)            | int64   |
+| 25 | (R)        | Curricular units 1st sem (grade)               | float64 |
+| 26 | (R)        | Curricular units 1st sem (without evaluations) | int64   |
+| 27 | (R)        | Curricular units 2nd sem (credited)            | int64   |
+| 28 | (R)        | Curricular units 2nd sem (enrolled)            | int64   |
+| 29 | (R)        | Curricular units 2nd sem (evaluations)         | int64   |
+| 30 | (R)        | Curricular units 2nd sem (approved)            | int64   |
+| 31 | (R)        | Curricular units 2nd sem (grade)               | float64 |
+| 32 | (R)        | Curricular units 2nd sem (without evaluations) | int64   |
+| 33 | (R)        | Unemployment rate                              | float64 |
+| 34 | (R)        | Inflation rate                                 | float64 |
+| 36 | (R)        | GDP                                            | float64 |
+| 37 | (N)        | Target                                         | object  |
+
+For ratio level data we can use histograms or boxplots to see their distribution. Some boxplots are presented here:
+
+#+begin_src python :results file :eval no
+  ratio_cols = list(range(21,37))
+  df.iloc[:,ratio_cols].plot.box(label=df.columns[21:36],figsize=(10,10))
+  plt.xticks(rotation=90)
+  plt.tight_layout()
+  plt.show()
+  file_name="images/box_01"
+  plt.savefig(file_name)
+#+end_src
+
+#+RESULTS:
+[[
+file:images/box_curricular.png]]
+
+** Changing data types
+
+The data-type needs to change to categorical for those that come in integer format but really represent categories. For tree based models this is not actually needed. 
+
+#+begin_src python
+  col_list = list(range(0,6))+list(range(7,12))+list(range(13,19))+[20]+[36]
+  df[df.columns[col_list]] = df[df.columns[col_list]].astype("category")
+#+end_src
+
+* Descriptive data analysis
+
+The way categorical data spread and associate with response helps us to build intution about our dataset.
+
+** Count plots
+
+#+begin_src python :eval no
+  col_list.remove(36) # we remove Target column from our list
+  for i in col_list:
+        if df.columns[i] in ["Course", "Mother's qualification", "Father's qualification", "Mother's occupation", "Father's occupation", "Application mode", "Previous qualification", "Nacionality"]:
+              fig, ax = plt.subplots(figsize= (9,5), layout="tight")
+        else:
+              fig, ax = plt.subplots(figsize= (4,4), layout="tight")
+        
+        sns.countplot(data=df, x= df.columns[i], ax=ax, hue="Target")
+        plt.savefig(f"images/countplot_{i}")
+        plt.close("all")
+#+end_src
+
+View countplots:
+
+#+begin_src python :results replace value list
+  files = [f"[[file:images/countplot_{i}.png][{df.columns[i]}]]" for i in col_list]
+  files
+#+end_src
+
+#+RESULTS:
+- [[file:images/countplot_0.png][Marital status]]
+- [[file:images/countplot_1.png][Application mode]]
+- [[file:images/countplot_2.png][Application order]]
+- [[file:images/countplot_3.png][Course]]
+- [[file:images/countplot_4.png][Daytime/evening attendance]]
+- [[file:images/countplot_5.png][Previous qualification]]
+- [[file:images/countplot_7.png][Nacionality]]
+- [[file:images/countplot_8.png][Mother's qualification]]
+- [[file:images/countplot_9.png][Father's qualification]]
+- [[file:images/countplot_10.png][Mother's occupation]]
+- [[file:images/countplot_11.png][Father's occupation]]
+- [[file:images/countplot_13.png][Displaced]]
+- [[file:images/countplot_14.png][Educational special needs]]
+- [[file:images/countplot_15.png][Debtor]]
+- [[file:images/countplot_16.png][Tuition fees up to date]]
+- [[file:images/countplot_17.png][Gender]]
+- [[file:images/countplot_18.png][Scholarship holder]]
+- [[file:images/countplot_20.png][International]]
+- [[file:images/countplot_36.png][Target]]
+
+
+
+- [[file:images/countplot_0.png]]
+- [[file:images/countplot_4.png]]
+- [[file:images/countplot_13.png]]
+
+
+From the count plots one can see that for some predictors there is a strong association to the ~Target~ (which is the response); for some others, there seems to be no association. To quantify this, we can use Pearson Chi-square statistic.
+
+** Association using Pearson Chi-square test
+Pearson Chi-square test gives us a statistic that can be used in Cramer's phi-squared statistic that gives us the degree of association between categorical data. I first define a function to calculate Cramer's statistic:
+
+#+begin_src python 
+  def cramer_stat(df, col ):
+      contingency_table = pd.crosstab(df[col], df['Target'])
+      chi2_stat = stats.chi2_contingency(contingency_table)[0]
+      n = contingency_table.sum().sum() 
+      k = contingency_table.shape[0]    
+      r = contingency_table.shape[1]    
+      cramer = np.sqrt(chi2_stat / (n*min(k-1, r-1)))
+      return cramer   
+#+end_src
+
+
+#+begin_src python 
+  cramer = [ cramer_stat(df, col) for col in df.select_dtypes("category").columns]
+  cramer = pd.DataFrame(cramer, index=df.select_dtypes("category").columns, columns=["cramer"])
+  fig, ax = plt.subplots(figsize=(5,5), layout="tight")
+  cramer.sort_values(by=["cramer"]).plot.bar(ax=ax, grid=True)
+  # plt.savefig("cramer.png")
+#+end_src
+
+#+RESULTS:
+: None
+
+[[file:cramer.png]]
+
+Interpretation of Cramér's V Values:
+
+- 0 ≤ V < 0.1: Very weak or no association.
+- 0.1 ≤ V < 0.3: Weak association.
+- 0.3 ≤ V < 0.5: Moderate association.
+- V ≥ 0.5: Strong association.
+
+We have couple of predictors showing fairly moderate association to the Target and some others showing week or no association.
+* A null model
+A null model can be made by classifying always to the most frequent class in the training set, which is ~Garduate~ in this case. Based on the probability of ~Graduate~ class, this model will have an accuracy of .47. 
+
+* Random forest
+#+begin_src python
+  
+  X_train, X_test, y_train, y_test = train_test_split(df.drop(columns=["Target"]), df.Target, test_size=.3, random_state=42)
+  rf = RandomForestClassifier(n_estimators=100, random_state=42)
+  rf.fit(X_train, y_train)
+#+end_src
+
+- Calculating the accuracy of the model:
+
+#+begin_src python :results replace value 
+  y_pred = rf.predict_proba(X_test)
+  y_pred = np.argmax(y_pred, axis=1)
+  labels = y_test.cat.categories
+  y_pred = [labels[i] for i in y_pred]
+  acc = confusion_matrix(y_test, y_pred)
+  acc.diagonal().sum()/acc.sum()
+#+end_src
+
+#+RESULTS:
+: 0.8311988151245862
+
+This means that around 83% of times our model predicted a true class.
+
+- Feature importance:
+#+begin_src python
+  fig, ax = plt.subplots(figsize=(10,7), layout='tight') 
+  imp_ind = np.argsort(rf.feature_importances_)[::-1]
+  ax.bar( rf.feature_names_in_[imp_ind] , rf.feature_importances_[imp_ind])
+  plt.xticks(rotation=90)
+  plt.savefig("feature_imp.png")
+#+end_src
+
+[[file:feature_imp.png]]
+
+The top five most relevant features to the ~Target~ are:
+
+#+begin_src python :results replace value 
+  rf.feature_names_in_[imp_ind][:5]
+#+end_src
+
+#+RESULTS:
+: array(['Curricular units 2nd sem (approved)',
+:        'Curricular units 2nd sem (grade)',
+:        'Curricular units 1st sem (approved)',
+:        'Curricular units 1st sem (grade)',
+:        'Curricular units 2nd sem (evaluations)'], dtype=object)
