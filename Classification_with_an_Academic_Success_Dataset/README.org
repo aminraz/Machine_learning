@@ -86,7 +86,7 @@ The aim of classification is to predict ~Target~
 
 ~Target~ comes in three classes: Dropout, Graduate, and Enrolled.
 
-Many of the predictors in out dataframe come in ~int~ format but actually represent categorical data.
+Many of the predictors come in ~int~ format but actually represent categorical data.
 
 There are generally four levels of data:
 - Nominal (N)
