@@ -238,7 +238,6 @@ Pearson Chi-square test gives us a statistic that can be used in Cramer's phi-sq
   # plt.savefig("cramer.png")
 #+end_src
 
-: None
 
 [[file:images/cramer.png]]
 
