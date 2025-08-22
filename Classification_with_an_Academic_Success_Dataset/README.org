@@ -242,7 +242,7 @@ Pearson Chi-square test gives us a statistic that can be used in Cramer's phi-sq
 
 [[file:images/cramer.png]]
 
-Interpretation of Cramér's V Values:
+Interpretation of Cramer's Values:
 
 - 0 ≤ V < 0.1: Very weak or no association.
 - 0.1 ≤ V < 0.3: Weak association.
