@@ -149,7 +149,7 @@ For ratio level data we can use histograms or boxplots to see their distribution
   plt.savefig(file_name)
 #+end_src
 
-[[file:images/box_curricular.png]]
+[[file:images/box_01.png]]
 
 ** Changing data types
 
