@@ -1,6 +1,6 @@
 #+startup: overview
 #+property: header-args:python :session *class*
-#+title: Machine learning projects
+#+title: Machine learning
 
 This repository showcases several of my machine learning projects using datasets from Kaggle.
 
