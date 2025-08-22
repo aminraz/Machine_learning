@@ -241,7 +241,7 @@ Pearson Chi-square test gives us a statistic that can be used in Cramer's phi-sq
 
 : None
 
-[[file:cramer.png]]
+[[file:images/cramer.png]]
 
 Interpretation of Cramér's V Values:
 
@@ -286,7 +286,7 @@ This means that around 83% of times our model predicted a true class.
   plt.savefig("feature_imp.png")
 #+end_src
 
-[[file:feature_imp.png]]
+[[file:images/feature_imp.png]]
 
 The top five most relevant features to the ~Target~ are:
 
