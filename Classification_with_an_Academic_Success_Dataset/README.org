@@ -25,7 +25,6 @@ In this project, a predictive model is built for a Kaggle palyground competition
   df.info()
 #+end_src
 
-#+RESULTS:
 #+begin_example
 <class 'pandas.core.frame.DataFrame'>
 Index: 76518 entries, 0 to 76517
@@ -79,7 +78,6 @@ The aim of classification is to predict ~Target~
   df.Target.value_counts()
 #+end_src
 
-#+RESULTS:
 : Target
 : Graduate    36282
 : Dropout     25296
@@ -151,7 +149,6 @@ For ratio level data we can use histograms or boxplots to see their distribution
   plt.savefig(file_name)
 #+end_src
 
-#+RESULTS:
 [[
 file:images/box_curricular.png]]
 
@@ -190,7 +187,6 @@ View countplots:
   files
 #+end_src
 
-#+RESULTS:
 - [[file:images/countplot_0.png][Marital status]]
 - [[file:images/countplot_1.png][Application mode]]
 - [[file:images/countplot_2.png][Application order]]
@@ -243,7 +239,6 @@ Pearson Chi-square test gives us a statistic that can be used in Cramer's phi-sq
   # plt.savefig("cramer.png")
 #+end_src
 
-#+RESULTS:
 : None
 
 [[file:cramer.png]]
@@ -278,7 +273,6 @@ A null model can be made by classifying always to the most frequent class in the
   acc.diagonal().sum()/acc.sum()
 #+end_src
 
-#+RESULTS:
 : 0.8311988151245862
 
 This means that around 83% of times our model predicted a true class.
@@ -300,7 +294,6 @@ The top five most relevant features to the ~Target~ are:
   rf.feature_names_in_[imp_ind][:5]
 #+end_src
 
-#+RESULTS:
 : array(['Curricular units 2nd sem (approved)',
 :        'Curricular units 2nd sem (grade)',
 :        'Curricular units 1st sem (approved)',
