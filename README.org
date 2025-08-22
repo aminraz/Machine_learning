@@ -2,7 +2,7 @@
 #+property: header-args:python :session *class*
 #+title: Machine learning projects
 
-I present some of my projects on machine learning in this repository:
+This repository showcases several of my machine learning projects using datasets from Kaggle.
 
 - [[file:Classification_with_an_Academic_Success_Dataset/README.org][Classification with an Academic Success Dataset]]
 
