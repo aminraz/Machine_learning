@@ -1,6 +1,6 @@
 #+startup: overview
 #+property: header-args:python :session *class* :results silent
-#+title: kaggle playground 
+#+title: Classification with an Academic Success Dataset 
 
 In this project, a predictive model is built for a Kaggle palyground competition announced [[https://www.kaggle.com/competitions/playground-series-s4e6/overview][here]].
 
