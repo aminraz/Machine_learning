@@ -1,6 +1,6 @@
 #+PROPERTY: header-args:python :session *_bank_data* :results silent
 #+PROPERTY: header-args:gnuplot :eval no
-
+#+title: Data visualization using Gnuplot
 * Import
 
 #+begin_src python
