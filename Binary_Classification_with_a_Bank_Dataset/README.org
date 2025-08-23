@@ -1,0 +1,133 @@
+#+PROPERTY: header-args:python :session *_bank_data* :results silent :tangle yes
+#+PROPERTY: header-args:gnuplot :eval no
+#+title: Binary Classification with a Bank Dataset
+
+* Import
+
+#+begin_src python
+  from sklearn.preprocessing import StandardScaler
+  from sklearn.model_selection import train_test_split
+  from sklearn.metrics import RocCurveDisplay
+  import numpy as np
+  import pandas as pd
+  import matplotlib.pyplot as plt
+  from sklearn.metrics import roc_auc_score
+  from catboost import CatBoostClassifier, Pool, metrics, cv
+#+END_SRC
+
+* Data pre-processing
+
+#+begin_src python :results replace output
+  df = pd.read_csv("train.csv", index_col = "id")
+  df.info()
+#+end_src
+
+#+begin_example
+<class 'pandas.core.frame.DataFrame'>
+Index: 750000 entries, 0 to 749999
+Data columns (total 17 columns):
+ #   Column     Non-Null Count   Dtype 
+---  ------     --------------   ----- 
+ 0   age        750000 non-null  int64 
+ 1   job        750000 non-null  object
+ 2   marital    750000 non-null  object
+ 3   education  750000 non-null  object
+ 4   default    750000 non-null  object
+ 5   balance    750000 non-null  int64 
+ 6   housing    750000 non-null  object
+ 7   loan       750000 non-null  object
+ 8   contact    750000 non-null  object
+ 9   day        750000 non-null  int64 
+ 10  month      750000 non-null  object
+ 11  duration   750000 non-null  int64 
+ 12  campaign   750000 non-null  int64 
+ 13  pdays      750000 non-null  int64 
+ 14  previous   750000 non-null  int64 
+ 15  poutcome   750000 non-null  object
+ 16  y          750000 non-null  int64 
+dtypes: int64(8), object(9)
+memory usage: 103.0+ MB
+#+end_example
+
+The aim is to predict correct class coded in ~y~:
+#+begin_src python :results replace value 
+  df.y.value_counts()
+#+end_src
+
+: y
+: 0    659512
+: 1     90488
+: Name: count, dtype: int64
+
+- Converting ~object~ type into ~category~:
+#+begin_src python
+  df[df.select_dtypes("O").columns] = df.select_dtypes("O").astype("category")
+#+end_src
+
+- Label encoding
+#+begin_src python :eval yes
+  from sklearn.preprocessing import LabelEncoder
+  le = LabelEncoder()
+  le.fit(["unknown", "primary", "secondary", "tertiary"])
+  df['education'] = le.fit_transform(df['education'])
+  le = LabelEncoder()
+  le.fit(["jan", "feb", "mar", "apr", "jun", "jul", "aug", "sep", "oct", "nov", "dec"])
+  df['month'] = le.fit_transform(df['month'])
+#+end_src
+
+* Catboost model
+Why Catboost:
+- Catboost has a native support for categorical data.
+- It is famous for out of the box good performance without tuning.
+- It needs minimal data pre-processing.
+
+We first train the model using a train-test-split approach:
+#+begin_src python :results replace value
+  X = df.drop(columns=["y"])
+  y = df.y
+  (X_train, X_test, y_train, y_test) = train_test_split(X, y, test_size = .3, random_state = 0)
+  cat_model = CatBoostClassifier(cat_features=list(X.select_dtypes("category")), random_seed=42, eval_metric=metrics.AUC(), n_estimators=100)
+  cat_model.fit(X_train, y_train)
+  cat_pred = cat_model.predict_proba(X_test)[:,1]
+  roc_auc_score(y_test,cat_pred)
+#+end_src
+
+: 0.9639642213934185
+
+* Submission
+Now we train the model using the whole dataset:
+#+begin_src python :results replace value
+  cat_model = CatBoostClassifier(cat_features=list(X.select_dtypes("category")), random_seed=42, eval_metric=metrics.AUC())
+  cat_model.fit(X, y)
+#+end_src
+
+Let's looking into how Catboost ranks features in terms of their importance in the model: 
+#+begin_src python :results replace value 
+  feature_imp = cat_model.get_feature_importance()
+  feature_names = X.columns
+  feature_imp = pd.DataFrame(feature_imp, index=feature_names, columns=["imp"])
+  # feature_imp.sort_values("imp").plot.bar(); plt.show()
+  feature_imp.sort_values("imp")
+#+end_src
+
+#+begin_example
+                 imp
+default     0.086355
+marital     1.139950
+education   1.205215
+previous    1.298298
+loan        1.415209
+poutcome    1.749696
+job         1.926098
+age         2.703794
+campaign    2.900431
+pdays       2.903277
+day         5.046036
+housing     6.549328
+balance     7.999810
+month      10.553420
+contact    10.983774
+duration   41.539309
+#+end_example
+
+The best score for this dataset in the leader-board is 0.978. Model presented in this notebook reached the score of 0.966 ([[https://www.kaggle.com/code/daytatech/catboost-with-feature-importance][my notebook in Kaggle]]). 
