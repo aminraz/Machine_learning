@@ -1,5 +1,5 @@
 #+startup: overview
-#+property: header-args:python :session *class* :results silent
+#+property: header-args:python :session *class* :results silent :tangle yes
 #+title: Classification with an Academic Success Dataset 
 
 In this project, a predictive model is built for a Kaggle palyground competition announced [[https://www.kaggle.com/competitions/playground-series-s4e6/overview][here]].
@@ -254,7 +254,6 @@ A null model can be made by classifying always to the most frequent class in the
 
 * Random forest
 #+begin_src python
-  
   X_train, X_test, y_train, y_test = train_test_split(df.drop(columns=["Target"]), df.Target, test_size=.3, random_state=42)
   rf = RandomForestClassifier(n_estimators=100, random_state=42)
   rf.fit(X_train, y_train)
@@ -263,14 +262,10 @@ A null model can be made by classifying always to the most frequent class in the
 - Calculating the accuracy of the model:
 
 #+begin_src python :results replace value 
-  y_pred = rf.predict_proba(X_test)
-  y_pred = np.argmax(y_pred, axis=1)
-  labels = y_test.cat.categories
-  y_pred = [labels[i] for i in y_pred]
-  acc = confusion_matrix(y_test, y_pred)
-  acc.diagonal().sum()/acc.sum()
+  rf.score(X_test, y_test)
 #+end_src
 
+#+RESULTS:
 : 0.8311988151245862
 
 This means that around 83% of times our model predicted a true class.
@@ -297,3 +292,20 @@ The top five most relevant features to the ~Target~ are:
 :        'Curricular units 1st sem (approved)',
 :        'Curricular units 1st sem (grade)',
 :        'Curricular units 2nd sem (evaluations)'], dtype=object)
+
+* Submission file
+
+Making the model using all training dataset:
+#+begin_src python
+  rf = RandomForestClassifier(n_estimators=100, random_state=42)
+  rf.fit(df.drop(columns=["Target"]), df.Target)
+#+end_src
+
+#+begin_src python
+  X = pd.read_csv("test.csv")
+  res = rf.predict(X.drop(columns=["id"]))
+  res = pd.DataFrame(res, index=X.id, columns=["Target"])
+  res.to_csv("submission.csv")
+#+end_src
+
+Upon submitting the submission file, Kaggle calculated the score to be 0.828 ([[https://www.kaggle.com/code/daytatech/categorical-association-with-cramer-s-statistic][kaggle notebook]]). The best score in the leader-board is .840. 
