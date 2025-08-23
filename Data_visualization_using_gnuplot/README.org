@@ -66,7 +66,6 @@ I first save some basic stats for different columns into variables inside gnuplo
   }
 #+end_src
 
-#+title: Plotting ~age~
 #+begin_src gnuplot :file age_hist.png
   set term png background rgb "grey80" size 500,400
   set termoption noenhanced
@@ -81,9 +80,8 @@ I first save some basic stats for different columns into variables inside gnuplo
   plot "train.csv"  u ratio_type_col[1]:(1) bins = 100 w boxes lc rgb "black" fs solid .4 title all_col[ratio_type_col[1]]
 #+end_src
 
-[[file:age_hist.png]]
+[[file:images/age_hist.png]]
 
-#+title: Plotting ~balance~
 #+begin_src gnuplot :file balance_hist.png
   reset
   set datafile separator comma
@@ -100,9 +98,8 @@ I first save some basic stats for different columns into variables inside gnuplo
   plot "train.csv"  u ratio_type_col[2]:(1) bins = 100 w boxes lc rgb "black" fs solid .4 title all_col[ratio_type_col[2]]
 #+end_src
 
-[[file:balance_hist.png]]
+[[file:images/balance_hist.png]]
 
-#+title: Plotting ~duration~
 #+begin_src gnuplot :file duration_hist.png
   reset
   set datafile separator comma
@@ -119,9 +116,8 @@ I first save some basic stats for different columns into variables inside gnuplo
   plot "train.csv"  u ratio_type_col[3]:(1) bins = 100 w boxes lc rgb "black" fs solid .4 title all_col[ratio_type_col[3]]
 #+end_src
 
-[[file:duration_hist.png]]
+[[file:images/duration_hist.png]]
 
-#+title: Plotting ~campaign~
 #+begin_src gnuplot :file capmaign_hist.png
   reset
   set datafile separator comma
@@ -138,9 +134,8 @@ I first save some basic stats for different columns into variables inside gnuplo
   plot "train.csv"  u ratio_type_col[4]:(1) bins = 100 w boxes lc rgb "black" fs solid .4 title all_col[ratio_type_col[4]]
 #+end_src
 
-[[file:capmaign_hist.png]]
+[[file:images/capmaign_hist.png]]
 
-#+title: Plotting ~pdays~
 #+begin_src gnuplot :file pdays_hist.png
   reset
   set datafile separator comma
@@ -157,9 +152,8 @@ I first save some basic stats for different columns into variables inside gnuplo
   plot "train.csv"  u ratio_type_col[5]:(1) bins = 100 w boxes lc rgb "black" fs solid .4 title all_col[ratio_type_col[5]]
 #+end_src
 
-[[file:pdays_hist.png]]
+[[file:images/pdays_hist.png]]
 
-#+title: Plotting ~previous~
 #+begin_src gnuplot :file previous_hist.png
   reset
   set datafile separator comma
@@ -176,7 +170,7 @@ I first save some basic stats for different columns into variables inside gnuplo
   plot "train.csv"  u ratio_type_col[6]:(1) bins = 100 w boxes lc rgb "black" fs solid .4 title all_col[ratio_type_col[6]]
 #+end_src
 
-[[file:previous_hist.png]]
+[[file:images/previous_hist.png]]
 
 Using pandas we can visualize the frequency of different categories in categorical columns:
 #+begin_src python :eval no 
@@ -189,5 +183,5 @@ Using pandas we can visualize the frequency of different categories in categoric
   plt.savefig("hist_bundle.png")
 #+end_src
 
-[[file:hist_bundle.png]]
+[[file:images/hist_bundle.png]]
 
