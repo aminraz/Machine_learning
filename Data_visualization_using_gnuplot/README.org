@@ -1,6 +1,8 @@
 #+PROPERTY: header-args:python :session *_bank_data* :results silent
 #+PROPERTY: header-args:gnuplot :eval no
 #+title: Data visualization using Gnuplot
+Dataset used in this notebook is part of a Kaggle playground competition announced [[https://www.kaggle.com/competitions/playground-series-s5e8][here]].
+
 * Import
 
 #+begin_src python
