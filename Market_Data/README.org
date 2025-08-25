@@ -93,7 +93,6 @@ Name: count, dtype: int64
 * Visualizing the data
 
 #+begin_src python :results replace file :file images/pairplot.png
-  fig, ax = plt.subplots( figsize=(10,10), layout='tight') 
   sns.pairplot(df, hue=df.columns[-1])
   plt.savefig("images/pairplot.png")
 #+end_src
@@ -103,10 +102,7 @@ Name: count, dtype: int64
 Data shows random distribution except for columns with ~year~ and ~Volume~. One obvious correlation is when the volume increases over years. ~Lag1-5~ variance fluctuates with ~year~; it also shows higher variance at very low and very high values of ~Volume~. 
 
 #+begin_src python :results replace file :file images/corr_matrix.png
-  # fig, ax = plt.subplots(figsize=(5,5), layout='tight')
-  plt.close("all")
   sns.heatmap(df.iloc[:,:-1].corr())
-  # fig.savefig("images/corr_matrix.png")
   plt.savefig("images/corr_matrix.png")
 #+end_src
 
