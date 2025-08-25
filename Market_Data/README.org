@@ -1,6 +1,6 @@
 #+startup: overview
 #+property: header-args:python :session *Exer_chap_4* :results silent
-#+title: Exercises of Chapter 4, Models
+#+title: Throwing models on market data!
 
 ~Weekly~ is part of the ISLP library. This dataset consists of percentage returns for the S&P 500 stock index over 1089 weeks, from 1990 until the end of 2010.
 
@@ -41,7 +41,6 @@ Market data are notoriously difficult to predict. I will test different models b
   df.info()
 #+end_src
 
-#+RESULTS:
 #+begin_example
 <class 'pandas.core.frame.DataFrame'>
 RangeIndex: 1089 entries, 0 to 1088
@@ -65,7 +64,6 @@ memory usage: 69.4 KB
   df.Year.value_counts().sort_index()
 #+end_src
 
-#+RESULTS:
 #+begin_example
 Year
 1990    47
@@ -100,7 +98,6 @@ Name: count, dtype: int64
   plt.savefig("images/pairplot.png")
 #+end_src
 
-#+RESULTS:
 [[file:images/pairplot.png]]
 
 #+begin_src python :results replace file :file images/corr_matrix.png
@@ -111,7 +108,6 @@ Name: count, dtype: int64
   plt.savefig("images/corr_matrix.png")
 #+end_src
 
-#+RESULTS:
 [[file:images/corr_matrix.png]]
 * Scaling data
 Scaling is preformed for ~Lag~ columns using ~Lag1~ as the base column. ~Volume~ is scaled separately.
@@ -130,7 +126,6 @@ Scaling is preformed for ~Lag~ columns using ~Lag1~ as the base column. ~Volume~
   res.diagonal().sum()/res.sum()
 #+end_src
 
-#+RESULTS:
 : 0.5555555555555556
 
 A null model that always predicts ~Up~ direction has an accuracy of 0.55.
@@ -157,7 +152,6 @@ A null model that always predicts ~Up~ direction has an accuracy of 0.55.
 #+end_src
 
 Scores using ~glm_auc_score~
-#+RESULTS:
 : Using only Year Score: 0.51
 : Using only Lag1 Score: 0.54
 : Using only Lag2 Score: 0.52
@@ -167,7 +161,6 @@ Scores using ~glm_auc_score~
 : Using only Volume Score: 0.50
 
 Scores using ~glm_table_score~
-#+RESULTS:
 : Using only Year Score: 0.55
 : Using only Lag1 Score: 0.55
 : Using only Lag2 Score: 0.55
@@ -185,15 +178,12 @@ Scores using ~glm_table_score~
   print("Score:", round(cv_models["test_score"].mean(), 2))
 #+end_src
 
-#+RESULTS:
 : Score: 0.54
 
 Scores using ~glm_table_score~
-#+RESULTS:
 : Score: 0.54
 
 Scores using ~glm_auc_score~
-#+RESULTS:
 : Score: 0.53
 
 To see the p-values for a model with all predictors:
@@ -203,7 +193,6 @@ To see the p-values for a model with all predictors:
   model.pvalues
 #+end_src
 
-#+RESULTS:
 : intercept    0.000243
 : Lag1         0.118144
 : Lag2         0.029601
@@ -226,7 +215,6 @@ I add second degree of ~Lag~ predictors to see if this has any effect on the mod
   print("Score:", round(cv_models["test_score"].mean(), 3))
 #+end_src
 
-#+RESULTS:
 : Score: 0.534
 
 * Linear Discriminant Analysis (LDA)
@@ -238,7 +226,6 @@ I add second degree of ~Lag~ predictors to see if this has any effect on the mod
   cv_models["test_score"].mean()
 #+end_src
 
-#+RESULTS:
 : 0.5389568467550119
 
 * Quadratic Discriminant Analysis (QDA)
@@ -250,7 +237,6 @@ I add second degree of ~Lag~ predictors to see if this has any effect on the mod
   cv_models["test_score"].mean()
 #+end_src
 
-#+RESULTS:
 : 0.5380818892286783
 
 * Naive Bayes (NB)
@@ -261,7 +247,6 @@ I add second degree of ~Lag~ predictors to see if this has any effect on the mod
   cv_models["test_score"].mean()
 #+end_src
 
-#+RESULTS:
 : 0.5307084607543323
 
 * K-nearest neighbors (KN)
@@ -275,7 +260,6 @@ I test K-nearest neighbors using cross validation for up to 20 neighbors:
 
 #+end_src
 
-#+RESULTS:
 #+begin_example
 neighbors: 1 , CV score: 0.486
 neighbors: 2 , CV score: 0.481
