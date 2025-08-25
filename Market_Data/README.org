@@ -100,7 +100,7 @@ Name: count, dtype: int64
 
 [[file:images/pairplot.png]]
 
-Data shows random distribution except for columns with ~year~ and ~Volume~. One obvious correlation is when the volume increases over years. ~Lag1-5~ variance fluctuates with ~year~; it also show higher variance at very low and very high values of ~Volume~. 
+Data shows random distribution except for columns with ~year~ and ~Volume~. One obvious correlation is when the volume increases over years. ~Lag1-5~ variance fluctuates with ~year~; it also shows higher variance at very low and very high values of ~Volume~. 
 
 #+begin_src python :results replace file :file images/corr_matrix.png
   # fig, ax = plt.subplots(figsize=(5,5), layout='tight')
