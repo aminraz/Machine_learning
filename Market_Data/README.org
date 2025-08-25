@@ -133,15 +133,18 @@ A null model that always predicts ~Up~ direction has an accuracy of 0.55.
 ** with one predictor
 
 #+begin_src python :results replace output
+  # defining a scores based on roc_auc
   def glm_auc_score(estimator, X_test, y_test):
     y_prob = estimator.predict(X_test)
     return roc_auc_score(y_test, y_prob)
+  # defining a scores using accuracy of classification
   def glm_table_score(estimator, X_test, y_test):
     res = estimator.predict(X_test) > .5
     table = confusion_matrix(y_test, res)
     accuracy = table.diagonal().sum()/table.sum()
     return accuracy
 
+  # doing cross validation for different models
   for col in df.columns[:-2]:
       design = MS([col])
       X = design.fit_transform(df)
