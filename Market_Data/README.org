@@ -100,6 +100,8 @@ Name: count, dtype: int64
 
 [[file:images/pairplot.png]]
 
+Data shows random distribution except for columns with ~year~ and ~Volume~. One obvious correlation is when the volume increases over years. ~Lag1-5~ variance fluctuates with ~year~; it also show higher variance at very low and very high values of ~Volume~. 
+
 #+begin_src python :results replace file :file images/corr_matrix.png
   # fig, ax = plt.subplots(figsize=(5,5), layout='tight')
   plt.close("all")
@@ -208,17 +210,17 @@ To see the p-values for a model with all predictors:
 The ~Lag2~ shows a significant pvalue but its effect is not strong enough for prediction.
 
 ** with added predictors
-I add second degree of ~Lag~ predictors to see if this has any effect on the model's score.
+I add second degree to all predictors to see if this has any effect on the model's score.
 
 #+begin_src python :results replace output
-  design=MS([ poly("Lag1",2), poly("Lag2",2), poly("Lag3",2),  poly("Lag4",2),  poly("Lag5",2), "Volume"])
+  design=MS([ poly("Lag1",2), poly("Lag2",2), poly("Lag3",2),  poly("Lag4",2),  poly("Lag5",2), poly("Volume", 2)])
   X=design.fit_transform(df)
   model = sklearn_sm(sm.GLM, model_args={'family':sm.families.Binomial()})
   cv_models = cross_validate(model, X, y, cv=10, scoring=glm_table_score)
   print("Score:", round(cv_models["test_score"].mean(), 3))
 #+end_src
 
-: Score: 0.534
+: Score: 0.529
 
 * Linear Discriminant Analysis (LDA)
 
