@@ -7,3 +7,4 @@ This repository showcases several of my machine learning projects using datasets
 - [[file:Classification_with_an_Academic_Success_Dataset/README.org][Classification with an Academic Success Dataset]]
 - [[file:Binary_Classification_with_a_Bank_Dataset/README.org][Binary Classification with a Bank Dataset]]
 - [[file:Data_visualization_using_gnuplot/README.org][Data Visualization with Gnuplot]]
+- [[file:Market_Data/README.org][Throwing models on market data]]
