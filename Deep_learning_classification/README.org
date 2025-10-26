@@ -1,0 +1,399 @@
+#+startup: overview
+#+PROPERTY: header-args:python :session *_tutorial_10_* :results silent
+
+In this notebook, I will illustrate deep learning modeling for a binary classification problem. I will first use logistic regression and then apply a neural network model to the same dataset. Two approaches in making the neural network will be used: a deep down approach, and a more straight forward and scalable approach.
+
+* Importing tools
+#+begin_src python
+  import statsmodels.api as st
+  import pandas as pd
+  import matplotlib.pyplot as plt
+  import numpy as np
+  from pytorch_lightning import Trainer
+  from pytorch_lightning.loggers import CSVLogger
+  import torch
+  from torch import nn
+  from torch.utils.data import TensorDataset
+  from torch.optim import RMSprop
+  from torchinfo import summary
+  from sklearn.metrics import roc_auc_score
+  from sklearn.model_selection import \
+      (train_test_split,
+       GridSearchCV)
+  from ISLP.torch import (SimpleDataModule,
+                          SimpleModule,
+                          ErrorTracker,
+                          rec_num_workers)
+  from sklearn.datasets import make_classification
+#+end_src
+
+* Synthesizing a dataset
+I use ~sklearn~ to synthesize a dataset for a binary classification with two predictors.
+#+begin_src python
+  X, y = make_classification(n_samples=500, n_features=2,
+                             n_classes=2, n_informative=2,
+                             n_redundant=0, n_clusters_per_class=1,
+                             random_state=0)
+  X = pd.DataFrame(X, columns=["feature_1", "feature_2"])
+#+end_src
+
+#+begin_src python
+  fig, ax = plt.subplots(figsize=(5,5), layout='tight')
+  ax.scatter(X.iloc[:,0],X.iloc[:,1], c=y,)
+  ax.set(xlabel=X.columns[0], ylabel=X.columns[1])
+  ax.legend()
+  # plt.show()
+  fig.savefig("dataset.png")
+#+end_src
+
+[[file:images/dataset.png]]
+
+
+* Train-test split
+Train and test sets are randomly made as follows:
+#+begin_src python
+  from sklearn.model_selection import train_test_split
+  X_train, X_test, y_train, y_test = train_test_split(X, y,
+                                                      test_size=0.2,
+                                                      random_state=1)
+#+end_src
+
+* Logistic regression
+Using logistic regression is usually the first method tried on binary classifications. It will be useful to conduct a logistic regression and later on compare the results with deep learning.
+
+#+begin_src python :results replace output
+  from statsmodels.api import Logit
+  X_logit_train = st.add_constant(X_train)
+  X_logit_test = st.add_constant(X_test)
+  model_logit = Logit(y_train==1, X_logit_train).fit()
+  y_logit_pred = model_logit.predict(X_logit_test)
+  roc_score = roc_auc_score(y_test, y_logit_pred)
+  print("ROC score for logistic regression is %.3f"%roc_score)
+#+end_src
+
+#+RESULTS:
+: Optimization terminated successfully.
+:          Current function value: 0.294663
+:          Iterations 8
+: ROC score for logistic regression is 0.920
+
+The main score we want to track is ROC score. The logistic regression yields 0.942 for ROC score.
+
+** Visualizing the results
+A visualization of classification using logistic regression is performed in the next code block.
+
+#+begin_src python
+
+  x_min, x_max = X.iloc[:, 0].min() - 1, X.iloc[:, 0].max() + 1
+  y_min, y_max = X.iloc[:, 1].min() - 1, X.iloc[:, 1].max() + 1
+
+  xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.1),
+                       np.arange(y_min, y_max, 0.1))
+  mesh_data = st.add_constant(np.c_[xx.ravel(), yy.ravel()])
+  Z = model_logit.predict(mesh_data)
+  Z = Z.reshape(xx.shape)
+
+  # 6. Plot the decision boundary
+  plt.contourf(xx, yy, Z, alpha=0.8, cmap=plt.cm.RdYlBu)  # Color regions based on predictions
+
+  plt.scatter(X_train.iloc[:, 0], X_train.iloc[:, 1], c=y_train, edgecolors='k', cmap=plt.cm.RdYlBu, marker='o', label='Train Data')
+  plt.scatter(X_test.iloc[:, 0], X_test.iloc[:, 1], c=y_test, edgecolors='k', cmap=plt.cm.RdYlBu, marker='^', label='Test Data')
+
+  plt.title("Logistic Regression Decision Boundary")
+  plt.xlabel("Feature 1")
+  plt.ylabel("Feature 2")
+  plt.legend(loc="best")
+  plt.savefig("logit_boundary.png")
+#+end_src
+
+[[file:images/logit_boundary.png]]
+
+* Deep learning modeling 
+** Building the model
+To enable our model to capture non-linear pattern, I use ReLU activation function for the hidden layer. The dropout layer which is a form of regularization is not needed here because we have not so many nodes in our networks. 
+
+#+begin_src python
+  class NNModel(nn.Module):
+      def __init__(self):
+          super(NNModel, self).__init__()
+          self.sequential = nn.Sequential(
+              nn.Linear(2, 4),
+              nn.ReLU(),
+              # nn.Dropout(0.4),
+              nn.Linear(4, 1),
+          )
+      def forward(self, x):
+          return self.sequential(x)
+#+end_src
+
+Our network has one hidden layer with 3 nodes with ReLU activation functions.
+
+** Making data tensors
+To feed our NN model, we need to transform our train-test dataset into tensors:
+
+#+begin_src python
+  X_train_nn = torch.tensor(X_train.to_numpy(), dtype=torch.float)
+  X_test_nn = torch.tensor(X_test.to_numpy(), dtype=torch.float)
+  y_train_nn = torch.tensor(y_train, dtype=torch.float).unsqueeze(1)
+  y_test_nn = torch.tensor(y_test, dtype=torch.float).unsqueeze(1)
+#+end_src
+
+** Initializing the model
+We are now ready to initialize the NN model and see some details about it:
+
+#+begin_src python :results replace value 
+  nn_model = NNModel()
+  summary(nn_model,
+          input_data=X_train_nn,
+          col_names=['input_size', 'output_size', 'num_params'])
+#+end_src
+
+#+RESULTS:
+#+begin_example
+===================================================================================================================
+Layer (type:depth-idx)                   Input Shape               Output Shape              Param #
+===================================================================================================================
+NNModel                                  [400, 2]                  [400, 1]                  --
+├─Sequential: 1-1                        [400, 2]                  [400, 1]                  --
+│    └─Linear: 2-1                       [400, 2]                  [400, 4]                  12
+│    └─ReLU: 2-2                         [400, 4]                  [400, 4]                  --
+│    └─Linear: 2-3                       [400, 4]                  [400, 1]                  5
+===================================================================================================================
+Total params: 17
+Trainable params: 17
+Non-trainable params: 0
+Total mult-adds (Units.MEGABYTES): 0.01
+===================================================================================================================
+Input size (MB): 0.00
+Forward/backward pass size (MB): 0.02
+Params size (MB): 0.00
+Estimated Total Size (MB): 0.02
+===================================================================================================================
+#+end_example
+
+Overall there are 17 parameters that need to be optimized.
+
+** Testing the model
+At this stage, if we feed some data into the model, output is calculated using random values assigned to the model parameters. This is how you can test the model output:
+#+begin_src python :results replace value 
+  nn_model(X_test_nn)[:5]
+#+end_src
+
+#+RESULTS:
+: tensor([[-0.2696],
+:         [-0.4590],
+:         [-0.3892],
+:         [-0.4124],
+:         [-0.3760]], grad_fn=<SliceBackward0>)
+
+The output is not between 0 and 1. In order to get outputs as probability, we need to manually apply ~sigmoid~ transformation to the output:
+
+#+begin_src python :results replace value 
+  torch.sigmoid(nn_model(X_test_nn)[:5])
+#+end_src
+
+#+RESULTS:
+: tensor([[0.4330],
+:         [0.3872],
+:         [0.4039],
+:         [0.3983],
+:         [0.4071]], grad_fn=<SigmoidBackward0>)
+
+** Training with a for loop
+The following approach for training the NN model gives you access to all steps and useful to learn the nitty-gritty of the process but is not scalable.
+
+Training an NN model is a repetitive process happening in a for loop. At each run in the loop model parameters are updated in the right direction. There are two main components needed for training the model: a loss function that calculates how far off the model prediction is in its current form and an optimizer that updates the model parameters in each step.
+
+To calculate the loss function you can decide how much of the training data you want to feed into it. In the first approach, I will use full-batch gradient descent, where all training data are used at every step of training. This approach is not practical for big datasets but works for our case here. Batching training data needs a data-loader that will be discussed in the next approach for training further down. 
+
+The loss function has a form that makes it possible to calculate its derivative symbolically. At each step, when the loss function is calculated, its ~backward~ method is called to calculate the gradient of the loss function relative to the model parameters. This is performed easily using the chain rule and the fact that the derivatives are analytically known.
+
+Since model parameters are in the form of tensor, their derivative are recorded with them when ~barckward~ method is called. The role of optimizer is to use these gradients and update the model parameters accordingly using methods like Stochastic Gradient Descent (SGD). We are basically want to find a local or at best the global minimum of the loss function in the model's parameters hyper-space. 
+
+The loss function we choose depends on the model. For our classification problem and the model structure ~nn.BCEWithLogitsLoss()~ fits the best.
+
+I like to add a secondary evaluation metric to see how training process improves model prediction. I use ROC score and calculate it at each training and testing step.
+
+#+begin_src python :results replace output list
+  #del(nn_model, optimizer, loss_fn)
+  nn_model = NNModel()
+  loss_fn = nn.BCEWithLogitsLoss()
+  optimizer = torch.optim.SGD(nn_model.parameters(), lr=0.1)
+
+  torch.manual_seed(42)
+  epochs = 150
+
+  for epoch in range(epochs):
+      nn_model.train()
+      y_logits = nn_model(X_train_nn)
+      y_pred = torch.sigmoid(y_logits)
+      loss = loss_fn(y_logits, y_train_nn)
+      roc_score = roc_auc_score(y_train_nn.detach().numpy(),
+                          y_pred.detach().numpy())                  
+      optimizer.zero_grad()
+      loss.backward()
+
+      optimizer.step()
+      nn_model.eval()
+      with torch.inference_mode():
+          test_logits = nn_model(X_test_nn)
+          test_pred = torch.sigmoid(test_logits)
+          test_loss = loss_fn(test_logits, y_test_nn)
+          test_roc_score = roc_auc_score(y_test_nn.detach().numpy(),
+                                   test_pred.detach().numpy())                  
+          if epoch % 10 == 0:
+              print("Epoch:",repr(epoch).rjust(3),f"| Loss: {loss:.2f}, Score: {roc_score:.2f}"
+                    f" | Test Loss: {test_loss:.2f}, Test Score: {test_roc_score:.2f}")
+#+end_src
+
+#+RESULTS:
+#+begin_example
+- Epoch:   0 | Loss: 0.71, Score: 0.83 | Test Loss: 0.73, Test Score: 0.79
+- Epoch:  10 | Loss: 0.65, Score: 0.87 | Test Loss: 0.67, Test Score: 0.82
+- Epoch:  20 | Loss: 0.61, Score: 0.89 | Test Loss: 0.63, Test Score: 0.85
+- Epoch:  30 | Loss: 0.58, Score: 0.91 | Test Loss: 0.60, Test Score: 0.87
+- Epoch:  40 | Loss: 0.55, Score: 0.91 | Test Loss: 0.58, Test Score: 0.88
+- Epoch:  50 | Loss: 0.53, Score: 0.92 | Test Loss: 0.55, Test Score: 0.89
+- Epoch:  60 | Loss: 0.50, Score: 0.93 | Test Loss: 0.53, Test Score: 0.90
+- Epoch:  70 | Loss: 0.48, Score: 0.93 | Test Loss: 0.51, Test Score: 0.90
+- Epoch:  80 | Loss: 0.46, Score: 0.93 | Test Loss: 0.50, Test Score: 0.90
+- Epoch:  90 | Loss: 0.45, Score: 0.94 | Test Loss: 0.48, Test Score: 0.91
+- Epoch: 100 | Loss: 0.43, Score: 0.94 | Test Loss: 0.47, Test Score: 0.91
+- Epoch: 110 | Loss: 0.42, Score: 0.94 | Test Loss: 0.45, Test Score: 0.92
+- Epoch: 120 | Loss: 0.40, Score: 0.94 | Test Loss: 0.44, Test Score: 0.92
+- Epoch: 130 | Loss: 0.39, Score: 0.94 | Test Loss: 0.43, Test Score: 0.92
+- Epoch: 140 | Loss: 0.38, Score: 0.94 | Test Loss: 0.42, Test Score: 0.92
+#+end_example
+
+The highest score we can get is 0.92 which pretty close to 0.915 from logistic regression.
+
+** Training with pytorch-lightning
+In this section, I train the same model from the previous section using the ~Trainer~ method from pytorch-lightning package. The ~Trainer~ needs a model module and a data module. Making these ready with pytorch-lightning is not straight forward and needs some coding. The ~ISLP~ package comes handy here. It provides some methods to prepare modules required by pytorch-lightning. And this is how I do it here.
+
+First we need to make some tensor datasets:
+#+begin_src python
+  data_train = TensorDataset(X_train_nn, y_train_nn)
+  data_test = TensorDataset(X_test_nn, y_test_nn)
+#+end_src
+
+Finding the number of processors:
+#+begin_src python
+  max_num_workers = rec_num_workers()
+#+end_src
+
+~SimpleDataModule~ from ISLP package creates a data module from training and test data:
+#+begin_src python
+  data_dm = SimpleDataModule(data_train,
+                            data_test,
+                            batch_size=40,
+                            num_workers=min(4, max_num_workers),
+                            validation=data_test)
+#+end_src
+
+~batch_size~ makes our training scalable. If our dataset becomes huge, we need to use this option.
+
+Next, we make a NN module using ~SimpleModule~. This method chooses the proper loss function for us upon choosing the right sub method. 
+
+#+begin_src python :results replace value 
+  nn_model_l = NNModel()
+  nn_module = SimpleModule.binary_classification(nn_model_l)
+  nn_module
+#+end_src
+
+#+RESULTS:
+#+begin_example
+SimpleModule(
+  (model): NNModel(
+    (sequential): Sequential(
+      (0): Linear(in_features=2, out_features=4, bias=True)
+      (1): ReLU()
+      (2): Linear(in_features=4, out_features=1, bias=True)
+    )
+  )
+  (loss): BCEWithLogitsLoss()
+)
+#+end_example
+
+We introduce a logger here:
+#+begin_src python
+  logger = CSVLogger('logs', name='model')
+#+end_src
+
+And finally ~Trainer~ will be initialized and fitted:
+#+begin_src python
+  nn_trainer = Trainer(deterministic=True,
+                        max_epochs=150,
+                        log_every_n_steps=1,
+                        logger=logger,
+                        callbacks=[ErrorTracker()])
+  nn_trainer.fit(nn_module, datamodule=data_dm)
+#+end_src
+
+In the above code block, ~log_every_n_steps~ should to be a proper factor of ~X_train_nn.shape[0]/bacht_size~
+
+We run a test here:
+#+begin_src python
+  nn_trainer.test(nn_module, datamodule=data_dm)
+#+end_src
+
+#+begin_src python
+  nn_results = pd.read_csv(logger.experiment.metrics_file_path)
+#+end_src
+
+** Plotting loss over epochs
+
+#+begin_src python
+  fig, ax = plt.subplots(figsize=(5,5), layout='tight')
+  nn_results.plot.scatter("epoch", "train_loss", ax=ax, c="k", label="train")
+  nn_results.plot.scatter("epoch", "valid_loss", ax=ax, c="g", label="validation")
+  # nn_results.plot.scatter("epoch", "train_accuracy_epoch", ax=ax, c="r", label="train acc")
+  # nn_results.plot.scatter("epoch", "valid_accuracy", ax=ax, c="b", label="validation acc")
+  ax.set(ylabel="loss")
+  fig.savefig("results_lightning.png")
+  plt.show()
+#+end_src
+
+** Plotting classification boundary
+#+begin_src python
+
+  # x_min, x_max = X.iloc[:, 0].min() - 1, X.iloc[:, 0].max() + 1
+  # y_min, y_max = X.iloc[:, 1].min() - 1, X.iloc[:, 1].max() + 1
+
+  # xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.1),
+                       # np.arange(y_min, y_max, 0.1))
+  mesh_data = torch.tensor(np.c_[xx.ravel(), yy.ravel()], dtype=torch.float)
+  Z = torch.sigmoid(nn_model_l(mesh_data))
+  Z = Z.detach().numpy()
+  Z = Z.reshape(xx.shape)
+
+  # 6. Plot the decision boundary
+  plt.contourf(xx, yy, Z, alpha=0.8, cmap=plt.cm.RdYlBu)  # Color regions based on predictions
+
+  plt.scatter(X_train.iloc[:, 0], X_train.iloc[:, 1], c=y_train, edgecolors='k', cmap=plt.cm.RdYlBu, marker='o', label='Train Data')
+  plt.scatter(X_test.iloc[:, 0], X_test.iloc[:, 1], c=y_test, edgecolors='k', cmap=plt.cm.RdYlBu, marker='^', label='Test Data')
+
+  plt.title("Logistic Regression Decision Boundary")
+  plt.xlabel("Feature 1")
+  plt.ylabel("Feature 2")
+  plt.legend(loc="best")
+  plt.savefig("nn_boundary.png")
+#+end_src
+
+[[file:images/nn_boundary.png]]
+
+From the plot, we can see that the classification with NN is doing a better job than logistic regression. 
+
+** ROC Score
+#+begin_src python :results replace value
+  y_pred = torch.sigmoid(nn_model_l(X_test_nn))
+  roc_auc_score(y_test_nn, y_pred.detach().numpy())
+#+end_src
+
+#+RESULTS:
+: 0.9638699317543156
+
+The ROC score for the second training method is 0.96 which is a bit higher than 0.95 from the previous training method. This could be because of the batching method implemented in data loader used in the lightning version. Batching makes parameter updating more frequent. A better assessment will be made if we use a separate dataset for testing instead of using validation dataset.   
+
+
+
+
