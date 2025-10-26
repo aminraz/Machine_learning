@@ -360,7 +360,7 @@ We run a test here:
   Z = Z.detach().numpy()
   Z = Z.reshape(xx.shape)
 
-  # 6. Plot the decision boundary
+  # Plot the decision boundary
   plt.contourf(xx, yy, Z, alpha=0.8, cmap=plt.cm.RdYlBu)  # Color regions based on predictions
 
   plt.scatter(X_train.iloc[:, 0], X_train.iloc[:, 1], c=y_train, edgecolors='k', cmap=plt.cm.RdYlBu, marker='o', label='Train Data')
