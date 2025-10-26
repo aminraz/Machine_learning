@@ -71,7 +71,6 @@ Using logistic regression is usually the first method tried on binary classifica
   print("ROC score for logistic regression is %.3f"%roc_score)
 #+end_src
 
-#+RESULTS:
 : Optimization terminated successfully.
 :          Current function value: 0.294663
 :          Iterations 8
@@ -148,7 +147,6 @@ We are now ready to initialize the NN model and see some details about it:
           col_names=['input_size', 'output_size', 'num_params'])
 #+end_src
 
-#+RESULTS:
 #+begin_example
 ===================================================================================================================
 Layer (type:depth-idx)                   Input Shape               Output Shape              Param #
@@ -179,7 +177,6 @@ At this stage, if we feed some data into the model, output is calculated using r
   nn_model(X_test_nn)[:5]
 #+end_src
 
-#+RESULTS:
 : tensor([[-0.2696],
 :         [-0.4590],
 :         [-0.3892],
@@ -192,7 +189,6 @@ The output is not between 0 and 1. In order to get outputs as probability, we ne
   torch.sigmoid(nn_model(X_test_nn)[:5])
 #+end_src
 
-#+RESULTS:
 : tensor([[0.4330],
 :         [0.3872],
 :         [0.4039],
@@ -246,7 +242,6 @@ I like to add a secondary evaluation metric to see how training process improves
                     f" | Test Loss: {test_loss:.2f}, Test Score: {test_roc_score:.2f}")
 #+end_src
 
-#+RESULTS:
 #+begin_example
 - Epoch:   0 | Loss: 0.71, Score: 0.83 | Test Loss: 0.73, Test Score: 0.79
 - Epoch:  10 | Loss: 0.65, Score: 0.87 | Test Loss: 0.67, Test Score: 0.82
@@ -300,7 +295,6 @@ Next, we make a NN module using ~SimpleModule~. This method chooses the proper l
   nn_module
 #+end_src
 
-#+RESULTS:
 #+begin_example
 SimpleModule(
   (model): NNModel(
@@ -389,7 +383,6 @@ From the plot, we can see that the classification with NN is doing a better job 
   roc_auc_score(y_test_nn, y_pred.detach().numpy())
 #+end_src
 
-#+RESULTS:
 : 0.9638699317543156
 
 The ROC score for the second training method is 0.96 which is a bit higher than 0.95 from the previous training method. This could be because of the batching method implemented in data loader used in the lightning version. Batching makes parameter updating more frequent. A better assessment will be made if we use a separate dataset for testing instead of using validation dataset.   
