@@ -366,7 +366,7 @@ We run a test here:
   plt.scatter(X_train.iloc[:, 0], X_train.iloc[:, 1], c=y_train, edgecolors='k', cmap=plt.cm.RdYlBu, marker='o', label='Train Data')
   plt.scatter(X_test.iloc[:, 0], X_test.iloc[:, 1], c=y_test, edgecolors='k', cmap=plt.cm.RdYlBu, marker='^', label='Test Data')
 
-  plt.title("Logistic Regression Decision Boundary")
+  plt.title("NN Decision Boundary")
   plt.xlabel("Feature 1")
   plt.ylabel("Feature 2")
   plt.legend(loc="best")
