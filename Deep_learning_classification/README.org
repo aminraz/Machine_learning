@@ -347,6 +347,8 @@ We run a test here:
   plt.show()
 #+end_src
 
+[[file:images/results_lightning.png]]
+
 ** Plotting classification boundary
 #+begin_src python
 
